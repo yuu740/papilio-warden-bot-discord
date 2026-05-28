@@ -2,6 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+import asyncio
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -127,4 +128,16 @@ async def listall(ctx: discord.Interaction):
     else:
         await ctx.followup.send(pesan_full)
 
-bot.run(TOKEN)
+async def main():
+    # Membuat session baru yang bersih di dalam loop async
+    async with bot:
+        await bot.start(TOKEN)
+
+# Menjalankan bot dengan penanganan eror loop
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Bot dimatikan secara manual.")
+    except Exception as e:
+        print(f"⚠️ Terjadi gangguan koneksi pada bot: {e}")
