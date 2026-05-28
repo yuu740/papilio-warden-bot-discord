@@ -5,7 +5,11 @@ from dotenv import load_dotenv
 import asyncio
 
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
+TOKEN = os.environ.get('DISCORD_TOKEN') or os.getenv('DISCORD_TOKEN')
+
+# Cek darurat: Jika token benar-benar kosong, cetak eror di log agar tidak stuck kosong
+if not TOKEN:
+    print("❌ EROR UTAMA: Token DISCORD_TOKEN tidak ditemukan! Periksa panel Settings > Secrets di Hugging Face kamu.")
 
 intents = discord.Intents.default()
 intents.members = True 
