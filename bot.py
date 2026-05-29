@@ -10,7 +10,13 @@ load_dotenv()
 TOKEN = os.environ.get('DISCORD_TOKEN') or os.getenv('DISCORD_TOKEN')
 
 if not TOKEN:
-    print("❌ EROR UTAMA: Token DISCORD_TOKEN tidak ditemukan! Periksa panel Settings > Secrets di Hugging Face kamu.")
+    jalur_secret_hf = "/space_secrets/DISCORD_TOKEN"
+    if os.path.exists(jalur_secret_hf):
+        with open(jalur_secret_hf, "r") as f:
+            TOKEN = f.read().strip()
+            
+if not TOKEN:
+    print("❌ EROR UTAMA: Token DISCORD_TOKEN tidak ditemukan!", flush=True)
 
 intents = discord.Intents.default()
 intents.members = True 
