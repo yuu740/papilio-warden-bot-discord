@@ -3,11 +3,12 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import asyncio
+import threading
+from http.server import SimpleHTTPRequestHandler, HTTPServer
 
 load_dotenv()
 TOKEN = os.environ.get('DISCORD_TOKEN') or os.getenv('DISCORD_TOKEN')
 
-# Cek darurat: Jika token benar-benar kosong, cetak eror di log agar tidak stuck kosong
 if not TOKEN:
     print("❌ EROR UTAMA: Token DISCORD_TOKEN tidak ditemukan! Periksa panel Settings > Secrets di Hugging Face kamu.")
 
@@ -17,7 +18,6 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
-# Sinkronisasi perintah otomatis saat bot menyala
 @bot.event
 async def on_ready():
     try:
@@ -47,8 +47,6 @@ async def bothelp(ctx: discord.Interaction):
         inline=False
     )
     embed.set_footer(text=f"Request oleh: {ctx.user.display_name}", icon_url=ctx.user.display_avatar.url)
-    
-    # Menggunakan response.send_message khusus untuk Slash Command
     await ctx.response.send_message(embed=embed)
 
 
@@ -68,9 +66,7 @@ async def listmember(ctx: discord.Interaction, nama_role: str):
     else:
         pesan = f"**📊 Daftar Anggota Role {role.name}:**\n" + "\n".join(daftar_nama)
         if len(pesan) > 2000:
-            # Kirim potongan pertama
             await ctx.response.send_message(pesan[0:1900])
-            # Kirim sisanya lewat follow-up
             for i in range(1900, len(pesan), 1900):
                 await ctx.followup.send(pesan[i:i+1900])
         else:
@@ -80,7 +76,6 @@ async def listmember(ctx: discord.Interaction, nama_role: str):
 # === PERINTAH 3: SLASH LIST ALL DINAMIS ===
 @bot.tree.command(name="listall", description="Menampilkan seluruh kasta role dan anggotanya")
 async def listall(ctx: discord.Interaction):
-    # Mengirim tanda "bot sedang memikirkan data" agar tidak terkena timeout 3 detik dari Discord
     await ctx.response.defer()
     
     output = []
@@ -132,12 +127,23 @@ async def listall(ctx: discord.Interaction):
     else:
         await ctx.followup.send(pesan_full)
 
+
+# === FITUR PENANGKAL TIMEOUT HUGGING FACE ===
+def jalankan_server_palsu():
+    # Hugging Face secara otomatis memantau port 7860
+    server_address = ('0.0.0.0', 7860)
+    httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
+    print("🌍 Server web palsu aktif di port 7860 (Hugging Face Healty Checker)")
+    httpd.serve_forever()
+
+
 async def main():
-    # Membuat session baru yang bersih di dalam loop async
+    # Jalankan server web palsu di thread terpisah agar tidak mengganggu bot
+    threading.Thread(target=jalankan_server_palsu, daemon=True).start()
+    
     async with bot:
         await bot.start(TOKEN)
 
-# Menjalankan bot dengan penanganan eror loop
 if __name__ == "__main__":
     try:
         asyncio.run(main())
