@@ -66,13 +66,34 @@ async def listmember(ctx: discord.Interaction, nama_role: str):
 @bot.tree.command(name="listall", description="Menampilkan seluruh kasta role dan anggotanya")
 async def listall(ctx: discord.Interaction):
     await ctx.response.defer()
+    
     output = [f"**📊 DAFTAR ANGGOTA {ctx.guild.name.upper()}**", "---"]
+    daftar_bot = []
+
     for role in sorted(ctx.guild.roles, key=lambda r: r.position, reverse=True):
-        if role.is_default() or role.is_bot_managed(): continue
+        if role.is_default() or role.is_bot_managed(): 
+            continue
+        
         manusia_members = [m.display_name for m in role.members if not m.bot]
-        output.append(f"🔹 **{role.name}:**")
-        for nama in manusia_members: output.append(f"- {nama}")
+        bot_members = [m.display_name for m in role.members if m.bot]
+        
+        for nama_bot in bot_members:
+            if nama_bot not in daftar_bot:
+                daftar_bot.append(nama_bot)
+        
+        if manusia_members:
+            output.append(f"🔹 **{role.name}:**")
+            for nama in manusia_members:
+                output.append(f"- {nama}")
+            output.append("") 
+
+    if daftar_bot:
+        output.append("🤖 **Bot:**")
+        for nama_bot in daftar_bot:
+            output.append(f"- {nama_bot}")
+
     pesan_full = "\n".join(output)
+    
     await ctx.followup.send(pesan_full[:2000])
 
 
