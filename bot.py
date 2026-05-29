@@ -4,7 +4,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 import asyncio
 import threading
-from http.server import SimpleHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, SimpleHTTPRequestHandler, HTTPServer
 
 load_dotenv()
 TOKEN = os.environ.get('DISCORD_TOKEN') or os.getenv('DISCORD_TOKEN')
@@ -129,10 +129,28 @@ async def listall(ctx: discord.Interaction):
 
 
 # === FITUR PENANGKAL TIMEOUT HUGGING FACE ===
+
+class KustomWebHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        # Menampilkan halaman HTML sederhana saat web Spaces diakses
+        html = """
+        <html>
+        <head><title>Papilio Warden System</title></head>
+        <body style="background-color: #1e1e2e; color: #f15a22; font-family: sans-serif; text-align: center; padding-top: 50px;">
+            <h1>🦋 Papilio Warden Status: ACTIVE 24/7 </h1>
+            <p style="color: #a6adc8;">Wangsheng Funeral Parlor - Cloud Checker v2</p>
+        </body>
+        </html>
+        """
+        self.wfile.write(bytes(html, "utf-8"))
+        
 def jalankan_server_palsu():
     # Hugging Face secara otomatis memantau port 7860
     server_address = ('0.0.0.0', 7860)
-    httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
+    httpd = HTTPServer(server_address, KustomWebHandler)
     print("🌍 Server web palsu aktif di port 7860 (Hugging Face Healty Checker)")
     httpd.serve_forever()
 
