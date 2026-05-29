@@ -4,8 +4,8 @@ from discord.ext import commands
 from dotenv import load_dotenv
 import asyncio
 import threading
-import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import aiohttp  # <--- WAJIB DITAMBAHKAN UNTUK PENGATURAN KONEKTOR
 
 load_dotenv()
 TOKEN = os.environ.get('DISCORD_TOKEN') or os.getenv('DISCORD_TOKEN')
@@ -20,7 +20,20 @@ intents = discord.Intents.default()
 intents.members = True 
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
+# =====================================================================
+# RAKITAN BOT KUSTOM UNTUK BYPASS DNS JARINGAN CLOUD
+# =====================================================================
+class BadakBypassBot(commands.Bot):
+    async def setup_hook(self):
+        # Memaksa bot menggunakan DNS Google & Cloudflare secara permanen
+        resolver = aiohttp.AsyncResolver(nameservers=["8.8.8.8", "1.1.1.1"])
+        connector = aiohttp.TCPConnector(resolver=resolver, use_dns_cache=False)
+        
+        # Masukkan konektor kustom ke dalam sesi HTTP bawaan bot
+        self.http.connector = connector
+
+# Ganti inisialisasi bot biasa dengan kelas kustom kita di atas
+bot = BadakBypassBot(command_prefix="!", intents=intents, help_command=None)
 
 @bot.event
 async def on_ready():
@@ -31,7 +44,8 @@ async def on_ready():
         print(f"Gagal sinkronisasi perintah: {e}", flush=True)
     print(f'Bot {bot.user.name} sudah aktif dan siap berkelana!', flush=True)
 
-# === (PERINTAH SLASH KAMU TETAP SAMA) ===
+
+# === PERINTAH SLASH TETAP SAMA ===
 @bot.tree.command(name="bothelp", description="Menampilkan dokumen mantra perintah Papilio Warden")
 async def bothelp(ctx: discord.Interaction):
     embed = discord.Embed(title="📖 KAMPUS WANGSHENG - DOKUMENTASI BOT", color=discord.Color.from_rgb(241, 90, 34))
@@ -61,6 +75,7 @@ async def listall(ctx: discord.Interaction):
     pesan_full = "\n".join(output)
     await ctx.followup.send(pesan_full[:2000])
 
+
 # === SERVER WEB HUGGING FACE ===
 class KustomWebHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -75,7 +90,8 @@ def jalankan_server_palsu():
     print("🌍 Server web palsu aktif di port 7860!", flush=True)
     httpd.serve_forever()
 
-# === LOGIKA PINTAR: PAKSA CONNECT ULANG JIKA DI-BLOKIR ===
+
+# === LOGIKA REKONEKSI MENUNGGU JARIKAN AKTIF ===
 async def start_bot_dengan_retry():
     while True:
         try:
