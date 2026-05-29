@@ -82,7 +82,7 @@ class KustomWebHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        html = "<html><body style='background:#1e1e2e;color:#f15a22;text-align:center;'><h1>🦋 Papilio Warden Status: ACTIVE 24/7</h1></body></html>"
+        html = "<html><body style='background:#1e1e2e;color:#f15a22;text-align:center;'><h1>Papilio Warden Status: ACTIVE 24/7</h1></body></html>"
         self.wfile.write(bytes(html, "utf-8"))
 
 def jalankan_server_palsu():
